@@ -4,10 +4,12 @@ const prompt = promptSync();
 
 export class CliFunctions {
 
-  static EARLIEST_START_TIME = 500;
-  static LATEST_END_TIME = 400;
-  static MILITARY_TIME_CONVERSION_PM = 1200;
-  static TIME_REGEX = '([0-9][0-9]):([0-9][0-9])(P|A)M'
+  static EARLIEST_START_TIME = new Date('10-01-2022 17:00');
+  static LATEST_END_TIME = new Date('10-02-2022 04:00');
+  static TIME_REGEX = new RegExp(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/);
+  static START_TIME_TO_BED_TIME_PAY = 12;
+  static BED_TIME_TO_MIDNIGHT_PAY = 8;
+  static MIDNIGHT_TO_END_TIME_PAY = 16;
 
   welcome() {
     console.log(`
@@ -19,6 +21,25 @@ This app will ask you 3 questions to determine what payment you should be receiv
 `);
   }
 
+  createNewDate(timeString) {
+
+    const timeSplit = timeString.split(':');
+
+    let newDate; 
+
+    if(timeSplit[0] >= '00' && timeSplit[0] <= '04') {
+      newDate = new Date('10-02-2022');
+    } else {
+      
+     newDate = new Date('10-01-2022');
+    }
+
+    newDate.setHours(timeSplit[0]);
+    newDate.setMinutes(timeSplit[1]);
+
+    return newDate;
+  }
+
   promptUser(userPrompt) {
     const result = prompt(userPrompt);
     return result;
@@ -26,73 +47,71 @@ This app will ask you 3 questions to determine what payment you should be receiv
 
   getStartTime(startTimeString) {
 
-    if (!startTimeString.match(CliFunctions.TIME_REGEX)) {
-      throw Error('Invalid format. Please try again in the following format: 06:00PM');
+    if (CliFunctions.TIME_REGEX.test(startTimeString) === false) {
+      throw Error('Invalid format. Please try again in the following format: 17:00');
     }
 
-    let startTimeSplit = startTimeString.split(':').join('').toUpperCase();
-    let startTimeActual = parseInt(startTimeSplit);
+    const startTimeDate = this.createNewDate(startTimeString);
 
-    if (Number.isNaN(startTimeActual)) {
-      throw Error('Invalid format. Please try again in the following format: 06:00PM');
+    if (`${startTimeDate.getHours()}:${startTimeDate.getMinutes()}` < `${CliFunctions.EARLIEST_START_TIME.getHours()}:${CliFunctions.EARLIEST_START_TIME.getMinutes()}`) {
+      throw Error('You may not start work before 17:00. Please enter a time that is 17:00 or later');
     }
 
-    if (startTimeActual < CliFunctions.EARLIEST_START_TIME) {
-      throw Error('You may not start work before 05:00PM. Please enter a time that is 05:00PM or later');
-    }
-
-    if (startTimeString.includes('PM')) {
-      startTimeActual += CliFunctions.MILITARY_TIME_CONVERSION_PM;
-    }
-    return startTimeActual;
-  }
-
-  getEndTime(endTimeString) {
-
-    if (!endTimeString.match(CliFunctions.TIME_REGEX)) {
-      throw Error('Invalid format. Please try again in the following format: 04:00AM');
-    }
-
-    let endTimeSplit = endTimeString.split(':').join('').toUpperCase();
-    let endTimeActual = parseInt(endTimeSplit);
-
-    if (Number.isNaN(endTimeActual)) {
-      throw Error('Invalid format. Please try again in the following format: 03:00AM');
-    }
-
-    if (endTimeActual > CliFunctions.LATEST_END_TIME) {
-      throw Error('You may not end work after 4 AM. Please enter a time that is 04:00AM or earlier');
-    }
-
-    if (endTimeString.includes('PM')) {
-      endTimeActual += CliFunctions.MILITARY_TIME_CONVERSION_PM;
-    }
-    return endTimeActual;
+    return startTimeDate;
   }
 
   getBedTime(bedTimeString) {
 
-    if (!bedTimeString.match(CliFunctions.TIME_REGEX)) {
-      throw Error('Invalid format. Please try again in the following format: 11:00PM');
+    if (CliFunctions.TIME_REGEX.test(bedTimeString) == false) {
+      throw Error('Invalid format. Please try again in the following format: 23:00');
     }
 
-    let bedTimeSplit = bedTimeString.split(':').join('').toUpperCase();
-    let bedTimeActual = parseInt(bedTimeSplit);
+    const bedTimeDate = this.createNewDate(bedTimeString);
 
-    if (Number.isNaN(bedTimeActual)) {
-      throw Error('Invalid format. Please try again in the following format: 11:30PM');
-    }
+    if (`${bedTimeDate.getHours()}:${bedTimeDate.getMinutes()}` < `${CliFunctions.EARLIEST_START_TIME.getHours()}:${CliFunctions.EARLIEST_START_TIME.getMinutes()}` || 
+    `${bedTimeDate.getHours()}:${bedTimeDate.getMinutes()}` > `${CliFunctions.LATEST_END_TIME.getHours()}:${CliFunctions.LATEST_END_TIME.getMinutes()}`) {
 
-    if (bedTimeActual < CliFunctions.EARLIEST_START_TIME && bedTimeActual > CliFunctions.LATEST_END_TIME) {
       throw Error('Bed time cannot be outside working hours.');
     }
 
-    if (bedTimeString.includes('PM')) {
-      bedTimeActual += CliFunctions.MILITARY_TIME_CONVERSION_PM;
+    return bedTimeDate;
+  }
+
+  getEndTime(endTimeString) {
+
+    if (CliFunctions.TIME_REGEX.test(endTimeString) == false) {
+      throw Error('Invalid format. Please try again in the following format: 04:00');
     }
 
-    return bedTimeActual;
+    const endTimeDate = this.createNewDate(endTimeString);
 
+    if (`${endTimeDate.getHours()}:${endTimeDate.getMinutes()}` > `${CliFunctions.LATEST_END_TIME.getHours()}:${CliFunctions.LATEST_END_TIME.getMinutes()}`) {
+      throw Error('You may not end work after 04:00. Please enter a time that is 04:00 or earlier');
+    }
 
+    return endTimeDate;
   }
+
+ 
+
+  calculatePayment(startTimeDate, bedTimeDate, endTimeDate) {
+
+   const midnightTest = this.createNewDate('00:00');
+    let totalPayment = 0;
+
+    totalPayment += Math.abs(Math.floor((((bedTimeDate.getTime() - startTimeDate.getTime()) / 1000) / (60 * 60)) * CliFunctions.START_TIME_TO_BED_TIME_PAY));
+    console.log(Math.abs(Math.floor((((bedTimeDate.getTime() - startTimeDate.getTime()) / 1000) / (60 * 60)) * CliFunctions.START_TIME_TO_BED_TIME_PAY)));
+
+    totalPayment += Math.abs(Math.floor((((bedTimeDate.getTime() - midnightTest.getTime()) / 1000) / (60 * 60)) * CliFunctions.BED_TIME_TO_MIDNIGHT_PAY));
+    console.log(Math.abs(Math.floor(((( bedTimeDate.getTime() - midnightTest.getTime()) / 1000) / (60 * 60)) * CliFunctions.BED_TIME_TO_MIDNIGHT_PAY)));
+
+    totalPayment += Math.abs(Math.floor((((endTimeDate.getTime() - midnightTest.getTime()) / 1000) / (60 * 60)) * CliFunctions.MIDNIGHT_TO_END_TIME_PAY));
+    console.log(Math.abs(Math.floor((((endTimeDate.getTime() - midnightTest.getTime()) / 1000) / (60 * 60)) * CliFunctions.MIDNIGHT_TO_END_TIME_PAY)));
+
+
+    console.log(`TOTAL PAYMENT: ${totalPayment}`)
+
+    return totalPayment;
+  }
+
 }

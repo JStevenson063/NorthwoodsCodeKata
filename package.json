@@ -5,12 +5,13 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "test": "mocha"
+    "test": "nyc mocha"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "nyc": "^15.1.0",
     "prompt-sync": "^4.2.0"
   },
   "devDependencies": {
