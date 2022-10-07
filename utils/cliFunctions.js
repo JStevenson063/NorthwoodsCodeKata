@@ -99,9 +99,7 @@ This app will ask you 3 questions to determine what payment you should be receiv
     if (endTimeDate.getDate() == 2) {
       totalPayment += Math.abs(endTimeMinusMidnight * CliFunctions.MIDNIGHT_TO_END_TIME_PAY);
     }
-
-    console.log(`TOTAL PAYMENT: ${totalPayment}`)
-
+    
     return totalPayment;
   }
 
