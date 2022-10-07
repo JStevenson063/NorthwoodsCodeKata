@@ -89,7 +89,7 @@ describe('Cli Functions', function () {
             expect(paymentTest).to.equal(100);
         });
 
-        it('should give a payment amount of $100 (startTimeDate = 20:00, bedTimeDate = 00:00, endTimeDate = 03:00) ', () =>{
+        it('should give a payment amount of $96 (startTimeDate = 20:00, bedTimeDate = 00:00, endTimeDate = 03:00) ', () =>{
             const startTimeDate = cliFunctions.createNewDate('20:00');
             const bedTimeDate = cliFunctions.createNewDate('00:00');
             const endTimeDate = cliFunctions.createNewDate('03:00');

@@ -48,10 +48,4 @@ while (endTimeConfirmed == false) {
     }
 }
 
-let payment = cliFunctions.calculatePayment(startTimeDate, bedTimeDate, endTimeDate);
-
-console.log(`Your total payment should be $${payment}`);
-
-
-
-
+cliFunctions.calculatePayment(startTimeDate, bedTimeDate, endTimeDate);
